@@ -1,0 +1,51 @@
+version: "3.7"
+services:
+  app:
+    build:
+      args:
+        user: geek
+        uid: 1001
+      context: ./.docker
+      dockerfile: Dockerfile
+    image: laravelapp
+    container_name: laravelapp-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./src:/var/www
+      - ./.docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+    networks:
+      - laravelapp
+
+  db:
+    image: mysql:8
+    container_name: laravelapp-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: 'lara_db'
+      MYSQL_ROOT_PASSWORD: 'root'
+      MYSQL_PASSWORD: 'lara_password'
+      MYSQL_USER: 'lara_user'
+    volumes:
+      - ./.docker/mysql/db/mysql:/var/lib/mysql
+      - ./.docker/mysql/my.cnf:/etc/mysql/my.cnf
+      - ./.docker/mysql/mysql-files:/var/lib/mysql-files
+
+    networks:
+      - laravelapp
+
+  nginx:
+    image: nginx:1.17-alpine
+    container_name: laravelapp-nginx
+    restart: unless-stopped
+    ports:
+      - 8008:80
+    volumes:
+      - ./src:/var/www
+      - ./.docker/nginx:/etc/nginx/conf.d
+    networks:
+      - laravelapp
+
+networks:
+  laravelapp:
+    driver: bridge
